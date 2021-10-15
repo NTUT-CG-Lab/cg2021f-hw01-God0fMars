@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - loader - ttf</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link type="text/css" rel="stylesheet" href="main.css">
+	</head>
+	<body>
+		<div id="info">
+			<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - TTFLoader using opentype by gero3
+			<br/>type to enter new text, drag to spin the text
+			<div id="selfScore"></div>
+		</div>
+		
+		<script src="./opentype.min.js"></script>
+		<script src="./three.min.js"></script>
+		<script src="./TTFLoader.js"></script>
+		<script src="scoreoutputer.min.js"></script>
+
+		<script>
+		
+            var fontttf = 'fonts/ttf/HanyiSentyPagoda.ttf'
+				
+
+			let container;
+			let camera, cameraTarget, scene, renderer;
+			let group, textMesh1, textMesh2, textMesh3, textMesh4, textMesh5, textMesh6, textMesh7, textMesh8, textMesh9, textMesh10, textMesh11, textMesh12, textGeo_1, textGeo_2, textGeo_3, textGeo_4, textGeo_5, textGeo_6, textGeo_7, textGeo_8, textGeo_9, textGeo_10, textGeo_11, textGeo_12, material;
+			let firstLetter = true;
+
+			let text_1 = '子';
+			let text_2 = '丑';
+			let text_3 = '寅';
+			let text_4 = '卯';
+			let text_5 = '辰';
+			let text_6 = '巳';
+			let text_7 = '午';
+			let text_8 = '未';
+			let text_9 = '申';
+			let text_10 = '酉';
+			let text_11 = '戌';
+			let text_12 = '亥';
+			let text_13 = '高等計算機圖學作業'
+
+			const height = 10,
+				size = 20,
+				hover = 230,
+				curveSegments = 2,
+				bevelThickness = 5,
+				bevelSize = 1.5;
+
+			let font = null;
+			const mirror = false;
+
+			let targetRotation = 0;
+			let targetRotationOnPointerDown = 0;
+
+			let pointerX = 0;
+			let pointerXOnPointerDown = 0;
+
+			let windowHalfX = window.innerWidth / 2;
+
+			init();
+			animate();
+
+			function init() {
+
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+
+				// CAMERA
+
+				camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 1, 1500 );
+				camera.position.set( 0, 750, 700 );
+
+				cameraTarget = new THREE.Vector3( 0, 300, 0 );
+
+				// SCENE
+
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0x000000 );
+				scene.fog = new THREE.Fog( 0x000000, 250, 1400 );
+
+				// LIGHTS
+
+				const dirLight = new THREE.DirectionalLight( 0xffffff, 0.125 );
+				dirLight.position.set( 0, 0, 1 ).normalize();
+				scene.add( dirLight );
+
+				const pointLight = new THREE.PointLight( 0xffffff, 1.5 );
+				pointLight.position.set( 0, 300, 90 );
+				pointLight.color.setHSL( Math.random(), 1, 0.5 );
+				scene.add( pointLight );
+
+				material = new THREE.MeshPhongMaterial( { color: 0xffffff, flatShading: true } );
+
+				group = new THREE.Group();
+				group.position.y = 100;
+
+				scene.add( group );
+
+				const loader = new THREE.TTFLoader();
+				
+                loader.load( fontttf , function ( json ) {
+				console.log(json)
+					font = new THREE.Font( json );
+					createText();
+				} );
+
+
+				const plane = new THREE.Mesh(
+					new THREE.PlaneGeometry( 10000, 10000 ),
+					new THREE.MeshBasicMaterial( { color: 0xffffff, opacity: 0.5, transparent: true } )
+				);
+				plane.position.y = 100;
+				plane.rotation.x = - Math.PI / 2;
+				scene.add( plane );
+
+				// RENDERER
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				container.appendChild( renderer.domElement );
+
+				// EVENTS
+
+				container.style.touchAction = 'none';
+				container.addEventListener( 'pointerdown', onPointerDown );
+
+				document.addEventListener( 'keypress', onDocumentKeyPress );
+				document.addEventListener( 'keydown', onDocumentKeyDown );
+
+				window.addEventListener( 'resize', onWindowResize );
+
+			}
+
+			function onWindowResize() {
+
+				windowHalfX = window.innerWidth / 2;
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			function onDocumentKeyDown( event ) {
+
+				if ( firstLetter ) {
+
+					firstLetter = false;
+					text = '';
+
+				}
+
+				const keyCode = event.keyCode;
+
+				// backspace
+
+				if ( keyCode === 8 ) {
+
+					event.preventDefault();
+
+					text = text.substring( 0, text.length - 1 );
+					refreshText();
+
+					return false;
+
+				}
+
+			}
+
+			function onDocumentKeyPress( event ) {
+
+				const keyCode = event.which;
+
+				// backspace
+
+				if ( keyCode === 8 ) {
+
+					event.preventDefault();
+
+				} else {
+
+					const ch = String.fromCharCode( keyCode );
+					text += ch;
+
+					refreshText();
+
+				}
+
+			}
+
+			function createText() {
+
+				textGeo_1 = new THREE.TextGeometry( text_1, {
+					
+					font: font,
+
+					size: size,
+					height: height,
+					curveSegments: curveSegments,
+
+					bevelThickness: bevelThickness,
+					bevelSize: bevelSize,
+					bevelEnabled: true
+
+				} );
+
+				textGeo_1.computeBoundingBox();
+				textGeo_1.computeVertexNormals();
+
+				const centerOffset = - 0.5 * ( textGeo_1.boundingBox.max.x - textGeo_1.boundingBox.min.x );
+
+				textMesh1 = new THREE.Mesh( textGeo_1, material );
+
+				textMesh1.position.x = centerOffset;
+				textMesh1.position.y = hover+100;
+				textMesh1.position.z = 0;
+
+				textMesh1.rotation.x = 0;
+				textMesh1.rotation.y = Math.PI * 2;
+
+				group.add( textMesh1 );
+				//======================================
+				textGeo_2 = new THREE.TextGeometry( text_2, {
+					
+					font: font,
+
+					size: size,
+					height: height,
+					curveSegments: curveSegments,
+
+					bevelThickness: bevelThickness,
+					bevelSize: bevelSize,
+					bevelEnabled: true
+
+				} );
+
+				textGeo_2.computeBoundingBox();
+				textGeo_2.computeVertexNormals();
+
+				
+				textMesh2 = new THREE.Mesh( textGeo_2, material );
+
+				textMesh2.position.x = centerOffset+100*Math.sin(Math.PI/6);
+				textMesh2.position.y = hover+100*Math.cos(Math.PI/6);
+				textMesh2.position.z = 0;
+				
+				textMesh2.rotation.x = 0;
+				textMesh2.rotation.y = Math.PI * 2;
+
+				group.add( textMesh2);
+				//======================================
+				textGeo_3 = new THREE.TextGeometry( text_3, {
+					
+					font: font,
+
+					size: size,
+					height: height,
+					curveSegments: curveSegments,
+
+					bevelThickness: bevelThickness,
+					bevelSize: bevelSize,
+					bevelEnabled: true
+
+				} );
+
+				textGeo_3.computeBoundingBox();
+				textGeo_3.computeVertexNormals();
+
+				
+				textMesh3 = new THREE.Mesh( textGeo_3, material );
+
+				textMesh3.position.x = centerOffset+100*Math.sin(Math.PI/3);
+				textMesh3.position.y = hover+100*Math.cos(Math.PI/3);
+				textMesh3.position.z = 0;
+				
+				textMesh3.rotation.x = 0;
+				textMesh3.rotation.y = Math.PI * 2;
+
+				group.add( textMesh3);
+				//======================================
+				textGeo_4 = new THREE.TextGeometry( text_4, {
+					
+					font: font,
+
+					size: size,
+					height: height,
+					curveSegments: curveSegments,
+
+					bevelThickness: bevelThickness,
+					bevelSize: bevelSize,
+					bevelEnabled: true
+
+				} );
+
+				textGeo_4.computeBoundingBox();
+				textGeo_4.computeVertexNormals();
+
+				
+				textMesh4 = new THREE.Mesh( textGeo_4, material );
+
+				textMesh4.position.x = centerOffset+100*Math.sin(Math.PI/2);
+				textMesh4.position.y = hover+100*Math.cos(Math.PI/2);
+				textMesh4.position.z = 0;
+				
+				textMesh4.rotation.x = 0;
+				textMesh4.rotation.y = Math.PI * 2;
+
+				group.add( textMesh4);
+				//======================================
+				textGeo_5 = new THREE.TextGeometry( text_5, {
+					
+					font: font,
+
+					size: size,
+					height: height,
+					curveSegments: curveSegments,
+
+					bevelThickness: bevelThickness,
+					bevelSize: bevelSize,
+					bevelEnabled: true
+
+				} );
+
+				textGeo_5.computeBoundingBox();
+				textGeo_5.computeVertexNormals();
+
+				
+				textMesh5 = new THREE.Mesh( textGeo_5, material );
+
+				textMesh5.position.x = centerOffset+100*Math.sin(Math.PI*2/3);
+				textMesh5.position.y = hover+100*Math.cos(Math.PI*2/3);
+				textMesh5.position.z = 0;
+				
+				textMesh5.rotation.x = 0;
+				textMesh5.rotation.y = Math.PI * 2;
+
+				group.add( textMesh5);
+				//======================================
+				textGeo_6 = new THREE.TextGeometry( text_6, {
+					
+					font: font,
+
+					size: size,
+					height: height,
+					curveSegments: curveSegments,
+
+					bevelThickness: bevelThickness,
+					bevelSize: bevelSize,
+					bevelEnabled: true
+
+				} );
+
+				textGeo_6.computeBoundingBox();
+				textGeo_6.computeVertexNormals();
+
+				
+				textMesh6 = new THREE.Mesh( textGeo_6, material );
+
+				textMesh6.position.x = centerOffset+100*Math.sin(Math.PI*5/6);
+				textMesh6.position.y = hover+100*Math.cos(Math.PI*5/6);
+				textMesh6.position.z = 0;
+				
+				textMesh6.rotation.x = 0;
+				textMesh6.rotation.y = Math.PI * 2;
+
+				group.add( textMesh6);
+				//======================================
+				textGeo_7 = new THREE.TextGeometry( text_7, {
+					
+					font: font,
+
+					size: size,
+					height: height,
+					curveSegments: curveSegments,
+
+					bevelThickness: bevelThickness,
+					bevelSize: bevelSize,
+					bevelEnabled: true
+
+				} );
+
+				textGeo_7.computeBoundingBox();
+				textGeo_7.computeVertexNormals();
+
+				
+				textMesh7 = new THREE.Mesh( textGeo_7, material );
+
+				textMesh7.position.x = centerOffset+100*Math.sin(Math.PI);
+				textMesh7.position.y = hover+100*Math.cos(Math.PI);
+				textMesh7.position.z = 0;
+				
+				textMesh7.rotation.x = 0;
+				textMesh7.rotation.y = Math.PI * 2;
+
+				group.add( textMesh7);
+				//======================================
+				textGeo_8 = new THREE.TextGeometry( text_8, {
+					
+					font: font,
+
+					size: size,
+					height: height,
+					curveSegments: curveSegments,
+
+					bevelThickness: bevelThickness,
+					bevelSize: bevelSize,
+					bevelEnabled: true
+
+				} );
+
+				textGeo_8.computeBoundingBox();
+				textGeo_8.computeVertexNormals();
+
+				
+				textMesh8 = new THREE.Mesh( textGeo_8, material );
+
+				textMesh8.position.x = centerOffset+100*Math.sin(Math.PI*7/6);
+				textMesh8.position.y = hover+100*Math.cos(Math.PI*7/6);
+				textMesh8.position.z = 0;
+				
+				textMesh8.rotation.x = 0;
+				textMesh8.rotation.y = Math.PI * 2;
+
+				group.add( textMesh8);
+				//======================================
+				textGeo_9 = new THREE.TextGeometry( text_9, {
+					
+					font: font,
+
+					size: size,
+					height: height,
+					curveSegments: curveSegments,
+
+					bevelThickness: bevelThickness,
+					bevelSize: bevelSize,
+					bevelEnabled: true
+
+				} );
+
+				textGeo_9.computeBoundingBox();
+				textGeo_9.computeVertexNormals();
+
+				
+				textMesh9 = new THREE.Mesh( textGeo_9, material );
+
+				textMesh9.position.x = centerOffset+100*Math.sin(Math.PI*8/6);
+				textMesh9.position.y = hover+100*Math.cos(Math.PI*8/6);
+				textMesh9.position.z = 0;
+				
+				textMesh9.rotation.x = 0;
+				textMesh9.rotation.y = Math.PI * 2;
+
+				group.add( textMesh9);
+				//======================================
+				textGeo_10 = new THREE.TextGeometry( text_10, {
+					
+					font: font,
+
+					size: size,
+					height: height,
+					curveSegments: curveSegments,
+
+					bevelThickness: bevelThickness,
+					bevelSize: bevelSize,
+					bevelEnabled: true
+
+				} );
+
+				textGeo_10.computeBoundingBox();
+				textGeo_10.computeVertexNormals();
+
+				
+				textMesh10 = new THREE.Mesh( textGeo_10, material );
+
+				textMesh10.position.x = centerOffset+100*Math.sin(Math.PI*9/6);
+				textMesh10.position.y = hover+100*Math.cos(Math.PI*9/6);
+				textMesh10.position.z = 0;
+				
+				textMesh10.rotation.x = 0;
+				textMesh10.rotation.y = Math.PI * 2;
+
+				group.add( textMesh10);
+				//======================================
+				textGeo_11 = new THREE.TextGeometry( text_11, {
+					
+					font: font,
+
+					size: size,
+					height: height,
+					curveSegments: curveSegments,
+
+					bevelThickness: bevelThickness,
+					bevelSize: bevelSize,
+					bevelEnabled: true
+
+				} );
+
+				textGeo_11.computeBoundingBox();
+				textGeo_11.computeVertexNormals();
+
+				
+				textMesh11 = new THREE.Mesh( textGeo_11, material );
+
+				textMesh11.position.x = centerOffset+100*Math.sin(Math.PI*10/6);
+				textMesh11.position.y = hover+100*Math.cos(Math.PI*10/6);
+				textMesh11.position.z = 0;
+				
+				textMesh11.rotation.x = 0;
+				textMesh11.rotation.y = Math.PI * 2;
+
+				group.add( textMesh11);
+				//======================================
+				textGeo_12 = new THREE.TextGeometry( text_12, {
+					
+					font: font,
+
+					size: size,
+					height: height,
+					curveSegments: curveSegments,
+
+					bevelThickness: bevelThickness,
+					bevelSize: bevelSize,
+					bevelEnabled: true
+
+				} );
+
+				textGeo_12.computeBoundingBox();
+				textGeo_12.computeVertexNormals();
+
+				
+				textMesh12 = new THREE.Mesh( textGeo_12, material );
+
+				textMesh12.position.x = centerOffset+100*Math.sin(Math.PI*11/6);
+				textMesh12.position.y = hover+100*Math.cos(Math.PI*11/6);
+				textMesh12.position.z = 0;
+				
+				textMesh12.rotation.x = 0;
+				textMesh12.rotation.y = Math.PI * 2;
+
+				group.add( textMesh12);
+				//======================================
+				textGeo_13 = new THREE.TextGeometry( text_13, {
+					
+					font: font,
+
+					size: size,
+					height: height,
+					curveSegments: curveSegments,
+
+					bevelThickness: bevelThickness,
+					bevelSize: bevelSize,
+					bevelEnabled: true
+
+				} );
+
+				textGeo_13.computeBoundingBox();
+				textGeo_13.computeVertexNormals();
+
+				
+				textMesh13 = new THREE.Mesh( textGeo_13, material );
+
+				textMesh13.position.x = centerOffset-120;
+				textMesh13.position.y = hover-150;
+				textMesh13.position.z = 50;
+				
+				textMesh13.rotation.x = Math.PI/-2;
+				textMesh13.rotation.y = 0;
+
+
+				group.add( textMesh13);
+				/*if ( mirror ) {
+
+					textMesh2 = new THREE.Mesh( textGeo, material );
+
+					textMesh2.position.x = centerOffset;
+					textMesh2.position.y = - hover;
+					textMesh2.position.z = height;
+
+					textMesh2.rotation.x = Math.PI;
+					textMesh2.rotation.y = Math.PI * 2;
+
+					group.add( textMesh2 );
+
+				}*/
+
+			}
+
+			function refreshText() {
+
+				group.remove( textMesh1 );
+				if ( mirror ) group.remove( textMesh2 );
+
+				if ( ! text ) return;
+
+				createText();
+
+			}
+
+			function onPointerDown( event ) {
+
+				if ( event.isPrimary === false ) return;
+
+				pointerXOnPointerDown = event.clientX - windowHalfX;
+				targetRotationOnPointerDown = targetRotation;
+
+				document.addEventListener( 'pointermove', onPointerMove );
+				document.addEventListener( 'pointerup', onPointerUp );
+
+			}
+
+			function onPointerMove( event ) {
+
+				if ( event.isPrimary === false ) return;
+
+				pointerX = event.clientX - windowHalfX;
+
+				targetRotation = targetRotationOnPointerDown + ( pointerX - pointerXOnPointerDown ) * 0.02;
+
+			}
+
+			function onPointerUp() {
+
+				if ( event.isPrimary === false ) return;
+
+				document.removeEventListener( 'pointermove', onPointerMove );
+				document.removeEventListener( 'pointerup', onPointerUp );
+
+			}
+
+			//
+
+			function animate() {
+
+
+				requestAnimationFrame( animate );
+
+				group.rotation.y += ( targetRotation - group.rotation.y ) * 0.05;
+
+				camera.lookAt( cameraTarget );
+
+				renderer.render( scene, camera );
+
+			}
+
+			var so = new ScoreOutputer("107590011");
+			so.installCSS(function(){
+				so.addChild("創建場景", 2, true);
+				so.addChild("讀取字形檔", 2, true);
+				so.addChild("將地支以圓圈排列", 2, true);
+				so.addChild("滑鼠點擊 12 地支分別跳轉網頁", 1, false);
+				so.addChild("顯示 高等計算機圖形作業", 1, true);
+				so.addChild("時鐘效果", 1, false);
+				so.addChild(" 任何 ply 格式模型", 1, false);
+				so.renderModal(
+					document.body,
+					//2. 自評表背景 (預設紅色)
+					'rgba(100,45,58,1)', 
+					//3. 自評表文字顏色 (預設白色)
+					'white', 
+					//4. 自評表文字大小 (預設 14pt)
+					'15pt', 
+					//5. 自評表 checkbox 文字大小 (預設多少忘了)
+					'15px', 
+					//6. 自評表標題 (預設 "自我評分表")
+					dialogTitle='自我評分表 (助教測試用)'
+				);
+				so.installDownloadBtn();
+		
+				//產生 "開啟自評表按鈕"
+				so.renderBtn(
+					//自評表按鈕插入位置
+					document.getElementById("selfScore"),
+					//自評表按鈕文字
+					"開啟自評表"
+				);
+			});
+			/*var circleRadius = 40;
+			var circleShape = new THREE.Shape();
+			circleShape.moveTo( 0, circleRadius );
+			circleShape.quadraticCurveTo( circleRadius, circleRadius, circleRadius, 0 );
+			circleShape.quadraticCurveTo( circleRadius, - circleRadius, 0, - circleRadius );
+			circleShape.quadraticCurveTo( - circleRadius, - circleRadius, - circleRadius, 0 );
+			circleShape.quadraticCurveTo( - circleRadius, circleRadius, 0, circleRadius );*/
+			var geometry = new THREE.CircleGeometry(120,64);
+			const material_ball = new THREE.MeshBasicMaterial( { color: 0xffff00 } );
+			var mesh_ball = new THREE.Mesh(geometry, material_ball);    // 網格模型  
+			mesh_ball.position.x = 0;
+			mesh_ball.position.y = 240;                    
+			scene.add(mesh_ball);
+			group.add(mesh_ball);
+
+			var plane_geometry = new THREE.PlaneGeometry(600,500);
+			const material_plane = new THREE.MeshBasicMaterial( { color: 0xffffff } );
+			var mesh_plane = new THREE.Mesh(plane_geometry, material_plane);    // 網格模型  
+			mesh_plane.position.x = 0;
+			mesh_plane.position.y = 70;
+
+			mesh_plane.rotation.x =	Math.PI/-2 ;  
+			mesh_plane.rotation.y = 0;                      
+			scene.add(mesh_plane);
+			group.add(mesh_plane);
+
+
+			const materialline = new THREE.LineBasicMaterial({
+				color: 0xffffff
+			});
+			const points = [];
+			points.push( new THREE.Vector3( - 100, 0, 0 ) );
+			points.push( new THREE.Vector3( 0, 100, 0 ) );
+
+		
+
+			
+		</script>
+
+	</body>
+</html>
